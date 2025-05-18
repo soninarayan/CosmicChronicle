@@ -1,0 +1,40 @@
+name: APOD ETL
+
+on:
+  schedule:
+    - cron: '0 6,18 * * *' # Runs at 06:00 and 18:00 UTC
+
+jobs:
+  etl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install Git LFS
+        run: |
+          sudo apt-get install git-lfs
+          git lfs install
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run ETL script
+        env:
+          NASA_API_KEY: ${{ secrets.NASA_API_KEY }}
+        run: python etl_apod.py
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore: update APOD for $(date -u +'%Y-%m-%d %H:%M')"
+          file_pattern: "apod/*.jpg apod/*.md"
