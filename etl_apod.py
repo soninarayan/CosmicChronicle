@@ -57,41 +57,43 @@ def save_image_and_markdown(date_str, title, explanation, media_info, copyright_
     image_path = os.path.join(apod_dir, f"{date_str}.jpg")
     markdown_path = os.path.join(apod_dir, f"{date_str}.md")
 
-    # Only proceed if files don't exist
-    if not os.path.exists(markdown_path):
-        # Create markdown first
-        with open(markdown_path, 'w') as md_file:
-            md_file.write("---\n")
-            md_file.write(f'title: "{title}"\n')
-            md_file.write(f'date: "{date_str}"\n')
-            md_file.write(f'media_type: "{media_info["type"]}"\n')
-            if media_info['video_url']:
-                md_file.write(f'video_url: "{media_info["video_url"]}"\n')
-            if copyright_info:
-                md_file.write(f'copyright: "{copyright_info}"\n')
-            md_file.write("---\n\n")
-            md_file.write(f"{explanation}\n")
-            
-            # Add media links at the bottom
-            if media_info['video_url']:
-                md_file.write(f"\n[View Video]({media_info['video_url']})\n")
-            if media_info['image_url']:
-                md_file.write(f"\n![APOD]({date_str}.jpg)\n")
-        
-        print(f"Created markdown file {markdown_path}", file=sys.stderr)
-
-        # Download image if available
-        if media_info['image_url'] and not os.path.exists(image_path):
-            try:
-                response = requests.get(media_info['image_url'])
-                response.raise_for_status()
-                with open(image_path, 'wb') as img_file:
-                    img_file.write(response.content)
-                print(f"Downloaded {'thumbnail' if media_info['video_url'] else 'image'} to {image_path}", file=sys.stderr)
-            except requests.exceptions.RequestException as e:
-                print(f"Error downloading image: {e}", file=sys.stderr)
-    else:
+    # Skip if both files already exist
+    if os.path.exists(markdown_path):
         print(f"Files already exist for {date_str}, skipping", file=sys.stderr)
+        return
+
+    # Create markdown first
+    with open(markdown_path, 'w') as md_file:
+        md_file.write("---\n")
+        md_file.write(f'title: "{title}"\n')
+        md_file.write(f'date: "{date_str}"\n')
+        md_file.write(f'media_type: "{media_info["type"]}"\n')
+        if media_info['video_url']:
+            md_file.write(f'video_url: "{media_info["video_url"]}"\n')
+        if copyright_info:
+            md_file.write(f'copyright: "{copyright_info}"\n')
+        md_file.write("---\n\n")
+        md_file.write(f"{explanation}\n")
+        
+        # Add media links at the bottom
+        if media_info['video_url']:
+            md_file.write(f"\n[View Video]({media_info['video_url']})\n")
+        if media_info['image_url']:
+            md_file.write(f"\n![APOD]({date_str}.jpg)\n")
+    
+    print(f"Created markdown file {markdown_path}", file=sys.stderr)
+
+    # Download image if available
+    if media_info['image_url']:
+        try:
+            response = requests.get(media_info['image_url'])
+            response.raise_for_status()
+            with open(image_path, 'wb') as img_file:
+                img_file.write(response.content)
+            print(f"Downloaded {'thumbnail' if media_info['video_url'] else 'image'} to {image_path}", file=sys.stderr)
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading image: {e}", file=sys.stderr)
+            # Don't raise the error - we still created the markdown file successfully
 
 def main():
     """Main function with enhanced error handling."""
