@@ -32,8 +32,22 @@ jobs:
           NASA_API_KEY: ${{ secrets.NASA_API_KEY }}
         run: python etl_apod.py
 
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [[ -n "$(git status --porcelain apod/)" ]]; then
+            echo "::set-output name=has_changes::true"
+          else
+            echo "No changes to commit"
+            echo "::set-output name=has_changes::false"
+          fi
+
       - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: "chore: update APOD for $(date -u +'%Y-%m-%d %H:%M')"
           file_pattern: 'apod/*.jpg apod/*.md'
+          commit_user_name: github-actions[bot]
+          commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          commit_author: "Narayan Soni <soninarayan@users.noreply.github.com>"

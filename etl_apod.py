@@ -60,7 +60,7 @@ def save_image_and_markdown(date_str, title, explanation, media_info, copyright_
     # Skip if both files already exist
     if os.path.exists(markdown_path):
         print(f"Files already exist for {date_str}, skipping", file=sys.stderr)
-        return
+        sys.exit(0)  # Exit successfully - no changes needed
 
     # Create markdown first
     with open(markdown_path, 'w') as md_file:
